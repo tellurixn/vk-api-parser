@@ -1,0 +1,10 @@
+body {
+    padding: 20px;
+}
+.user-info {
+    margin-bottom: 20px;
+}
+.friends-list, .relatives-list {
+    list-style-type: none;
+    padding: 0;
+}
