@@ -27,12 +27,17 @@
         </th:block>
     </table>
 
-    <h3>Список возможных родственников</h3>
-    <ul class="relatives-list">
-        <li>Родственник 1</li>
-        <li>Родственник 2</li>
-        <li>Родственник 3</li>
-    </ul>
+    <h3>Список возможных близких родственников</h3>
+    <table class="relatives-table">
+        <th:block th:each="relative : ${relatives}">
+
+            <tr>
+                <td th:text="${relative.getFirstName()} + ' ' + ${relative.getLastName()}"></td>
+                <td th:text="'https://vk.com/id' + ${relative.getId()}"></td>
+            </tr>
+
+        </th:block>
+    </table>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>

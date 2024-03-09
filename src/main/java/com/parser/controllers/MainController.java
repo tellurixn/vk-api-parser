@@ -12,6 +12,7 @@ import com.vk.api.sdk.exceptions.ClientException;
 import com.vk.api.sdk.httpclient.HttpTransportClient;
 
 import com.vk.api.sdk.objects.base.NameCase;
+import com.vk.api.sdk.objects.base.Sex;
 import com.vk.api.sdk.objects.users.Fields;
 import com.vk.api.sdk.objects.users.User;
 import com.vk.api.sdk.objects.users.responses.GetResponse;
@@ -48,17 +49,20 @@ public class MainController {
         TransportClient transportClient = new HttpTransportClient();
         VkApiClient vk = new VkApiClient(transportClient);
         ServiceActor serviceActor = new ServiceActor(appId, serviceKey);
+
         Long userIntID = 0L;
         String userUniversityName = "";
         String userName = "";
+        String userLastName = "";
         List<GetResponse> friendsByUniversity = new ArrayList<>();
+        List<GetResponse> relatives = new ArrayList<>();
 
 
         //Получение информации о пользователе
         List<GetResponse> users = vk.users()
                 .get(serviceActor)
                 .userIds(vkUserID)
-                .fields(Fields.UNIVERSITIES, Fields.EDUCATION)
+                .fields(Fields.UNIVERSITIES, Fields.EDUCATION, Fields.SEX)
                 .nameCase(NameCase.GENITIVE)
                 .execute();
 
@@ -66,9 +70,12 @@ public class MainController {
         фамилии и имени пользователя
         и университета*/
         for (GetResponse user : users) {
+            if(user.getIsClosed())
+                return "error";
             userIntID = user.getId();
             userUniversityName = user.getUniversityName();
-            userName = user.getFirstName() + " " + user.getLastName();
+            userLastName = user.getLastName();
+            userName = user.getFirstName() + " " + userLastName;
         }
 
         //Получение списка друзей пользователя
@@ -86,7 +93,7 @@ public class MainController {
         List<GetResponse> friends = vk.users()
                 .get(serviceActor)
                 .userIds(friendsIds)
-                .fields(Fields.UNIVERSITIES, Fields.EDUCATION)
+                .fields(Fields.UNIVERSITIES, Fields.EDUCATION, Fields.SEX)
                 .nameCase(NameCase.GENITIVE)
                 .execute();
 
@@ -94,12 +101,28 @@ public class MainController {
         for (GetResponse friend : friends) {
             if(friend.getUniversityName() != null && friend.getUniversityName().equals(userUniversityName))
                 friendsByUniversity.add(friend);
+
+
+            //поиск близких родственников
+            if(users.getFirst().getSex() == Sex.MALE) {
+                if (friend.getLastName().equals(userLastName) ||
+                        friend.getLastName().equals(userLastName + 'а'))
+                    relatives.add(friend);
+            }
+            else {
+                if (friend.getLastName().equals(userLastName) ||
+                        friend.getLastName().equals(userLastName.substring(0, userLastName.length() - 1)))
+                    relatives.add(friend);
+            }
         }
 
+        System.out.println("RELATIVES: " + relatives.size());
+        System.out.println("SEX: " + users.getFirst().getSex());
 
         //Передача найденных данных на страницу с результатом
         model.addAttribute("userName", userName);
         model.addAttribute("friends", friendsByUniversity);
+        model.addAttribute("relatives", relatives);
 
         return "result";
     }
